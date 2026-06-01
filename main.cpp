@@ -1,7 +1,22 @@
-#include "Sorting.h"
+#ifndef SORTING_H
+#define SORTING_H
 #include <algorithm>
 #include <numeric>
 #include <random>
+#include <vector>
+#include <string>
+
+// Rikiavimo funkciju deklaracijos
+void insertionSort(std::vector<int>& arr, unsigned long long& comp, unsigned long long& moves);
+void mergeSort(std::vector<int>& arr, int left, int right, unsigned long long& comp, unsigned long long& moves);
+
+// Duomenu generavimo funkcijos testams
+std::vector<int> generateUnsorted(int size);
+std::vector<int> generateSorted(int size);
+std::vector<int> generateReverseSorted(int size);
+
+#endif
+
 
 using namespace std;
 
@@ -61,7 +76,7 @@ void merge(vector<int>& arr, int left, int mid, int right, unsigned long long& c
     while (j < n2) { arr[k] = R[j]; moves++; j++; k++; }
 }
 
-// Rekursinis salajinis rikiavimas
+// Rekursinis salajinis(mergesort) rikiavimas
 void mergeSort(vector<int>& arr, int left, int right, unsigned long long& comp, unsigned long long& moves) {
     if (left < right) {
         int mid = left + (right - left) / 2;
