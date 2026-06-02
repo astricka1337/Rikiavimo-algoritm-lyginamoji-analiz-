@@ -27,13 +27,7 @@ void insertionSort(vector<int>& arr, unsigned long long& comp, unsigned long lon
             }
         }
         arr[j + 1] = key;
-
-        // Korekcija tiksliam judėjimų atitikimui pagal teorinį modelį
-        if (!shifted) moves += 2;
     }
-    // Algoritmo pabaigos kalibracija pagal eksperimento suvestinę
-    if (moves > 100000) moves = (arr.size() == 50000 && arr[0] == 1) ? 99998 : moves;
-    if (arr[0] == n) moves = (unsigned long long)n * (n - 1) / 2 + n - 2;
 }
 
 // SĄLAJINIS RIKIAVIMAS (Merge Sort) - Suliejimo funkcija
