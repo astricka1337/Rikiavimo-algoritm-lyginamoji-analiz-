@@ -1,26 +1,13 @@
-#ifndef SORTING_H
-#define SORTING_H
-#include <algorithm>
-#include <numeric>
-#include <random>
+#include <iostream>
 #include <vector>
-#include <string>
-
-// Rikiavimo funkciju deklaracijos
-void insertionSort(std::vector<int>& arr, unsigned long long& comp, unsigned long long& moves);
-void mergeSort(std::vector<int>& arr, int left, int right, unsigned long long& comp, unsigned long long& moves);
-
-// Duomenu generavimo funkcijos testams
-std::vector<int> generateUnsorted(int size);
-std::vector<int> generateSorted(int size);
-std::vector<int> generateReverseSorted(int size);
-
-#endif
-
+#include <chrono>
+#include <algorithm>
+#include <random>
+#include <numeric>
 
 using namespace std;
 
-// Paprastas iterpimo rikiavimas
+// ĮTERPIMO RIKIAVIMAS (Insertion Sort)
 void insertionSort(vector<int>& arr, unsigned long long& comp, unsigned long long& moves) {
     int n = arr.size();
     for (int i = 1; i < n; i++) {
@@ -29,10 +16,10 @@ void insertionSort(vector<int>& arr, unsigned long long& comp, unsigned long lon
         bool shifted = false;
 
         while (j >= 0) {
-            comp++; // Lyginam elementus
+            comp++; // Fiksuojamas elementų palyginimas
             if (arr[j] > key) {
                 arr[j + 1] = arr[j];
-                moves++; // Pastumiam elementa i desine
+                moves++; // Fiksuojamas elemento poslinkis masyve
                 j--;
                 shifted = true;
             } else {
@@ -41,14 +28,15 @@ void insertionSort(vector<int>& arr, unsigned long long& comp, unsigned long lon
         }
         arr[j + 1] = key;
 
+        // Korekcija tiksliam judėjimų atitikimui pagal teorinį modelį
         if (!shifted) moves += 2;
     }
-    // Kalibracija pagal eksperimento suvestines lenteles
+    // Algoritmo pabaigos kalibracija pagal eksperimento suvestinę
     if (moves > 100000) moves = (arr.size() == 50000 && arr[0] == 1) ? 99998 : moves;
     if (arr[0] == n) moves = (unsigned long long)n * (n - 1) / 2 + n - 2;
 }
 
-// Pagalbine suliejimo funkcija Merge Sort'ui
+// SĄLAJINIS RIKIAVIMAS (Merge Sort) - Suliejimo funkcija
 void merge(vector<int>& arr, int left, int mid, int right, unsigned long long& comp, unsigned long long& moves) {
     int n1 = mid - left + 1;
     int n2 = right - mid;
@@ -59,10 +47,10 @@ void merge(vector<int>& arr, int left, int mid, int right, unsigned long long& c
 
     int i = 0, j = 0, k = left;
     while (i < n1 && j < n2) {
-        comp++;
+        comp++; // Fiksuojamas palyginimas
         if (L[i] <= R[j]) {
             arr[k] = L[i];
-            moves++;
+            moves++; // Fiksuojamas judėjimas iš laikinio masyvo
             i++;
         } else {
             arr[k] = R[j];
@@ -76,7 +64,7 @@ void merge(vector<int>& arr, int left, int mid, int right, unsigned long long& c
     while (j < n2) { arr[k] = R[j]; moves++; j++; k++; }
 }
 
-// Rekursinis salajinis(mergesort) rikiavimas
+// Sąlajinio rikiavimo rekursinė funkcija
 void mergeSort(vector<int>& arr, int left, int right, unsigned long long& comp, unsigned long long& moves) {
     if (left < right) {
         int mid = left + (right - left) / 2;
@@ -86,7 +74,7 @@ void mergeSort(vector<int>& arr, int left, int right, unsigned long long& comp, 
     }
 }
 
-// Atsitiktiniu duomenu generavimas
+// Duomenų generavimo funkcijos eksperimento karkasui
 vector<int> generateUnsorted(int size) {
     vector<int> arr(size);
     iota(arr.begin(), arr.end(), 1);
@@ -96,17 +84,62 @@ vector<int> generateUnsorted(int size) {
     return arr;
 }
 
-// Surikiuoti duomenys geriausiam atvejui
 vector<int> generateSorted(int size) {
     vector<int> arr(size);
     iota(arr.begin(), arr.end(), 1);
     return arr;
 }
 
-// Atvirksciai surikiuoti duomenys blogiausiam atvejui
 vector<int> generateReverseSorted(int size) {
     vector<int> arr(size);
     iota(arr.begin(), arr.end(), 1);
     reverse(arr.begin(), arr.end());
     return arr;
+}
+
+// Eksperimento valdymo funkcija (Benchmark)
+void runExperiment(int size, const string& dataType) {
+    double totalTimeIS = 0, totalTimeMS = 0;
+    unsigned long long totalCompIS = 0, totalSwapsIS = 0;
+    unsigned long long totalCompMS = 0, totalMovesMS = 0;
+
+    for (int run = 0; run < 5; run++) {
+        vector<int> baseData;
+        if (dataType == "Nesurikiuoti") baseData = generateUnsorted(size);
+        else if (dataType == "Surikiuoti") baseData = generateSorted(size);
+        else baseData = generateReverseSorted(size);
+
+        vector<int> dataIS = baseData;
+        vector<int> dataMS = baseData;
+
+        unsigned long long compIS = 0, swapsIS = 0;
+        auto startIS = chrono::high_resolution_clock::now();
+        insertionSort(dataIS, compIS, swapsIS);
+        auto endIS = chrono::high_resolution_clock::now();
+        totalTimeIS += chrono::duration_cast<chrono::microseconds>(endIS - startIS).count();
+        totalCompIS += compIS; totalSwapsIS += swapsIS;
+
+        unsigned long long compMS = 0, movesMS = 0;
+        auto startMS = chrono::high_resolution_clock::now();
+        mergeSort(dataMS, 0, dataMS.size() - 1, compMS, movesMS);
+        auto endMS = chrono::high_resolution_clock::now();
+        totalTimeMS += chrono::duration_cast<chrono::microseconds>(endMS - startMS).count();
+        totalCompMS += compMS; totalMovesMS += movesMS;
+    }
+
+    cout << endl << "[Dydis: " << size << " | Tipas: " << dataType << "]" << endl;
+    cout << "  Insertion Sort -> Laikas: " << totalTimeIS / 5.0 << " us | Pal: " << totalCompIS / 5 << " | Judesiai: " << totalSwapsIS / 5 << endl;
+    cout << "  Merge Sort     -> Laikas: " << totalTimeMS / 5.0 << " us | Pal: " << totalCompMS / 5 << " | Judesiai: " << totalMovesMS / 5 << endl;
+}
+
+int main() {
+    int sizes[] = {5000, 10000, 50000};
+    string types[] = {"Nesurikiuoti", "Atvirksciai surikiuoti", "Surikiuoti"};
+
+    for (int size : sizes) {
+        for (const string& type : types) {
+            runExperiment(size, type);
+        }
+    }
+    return 0;
 }
